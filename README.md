@@ -1,191 +1,262 @@
 
 # Stockify — Modern Stock Selection and Prediction Platform
 
-Stockify is a **full-stack stock selection and prediction platform** designed to help users select their favorite stocks, view real-time data, and make smarter investment decisions.  
-It features a **Next.js frontend** with **Supabase backend**, Google authentication, and Twelve Data API integration for live market data.
+Stockify is a full‑stack stock selection and prediction platform. The **frontend** is a polished, responsive **Next.js (TypeScript)** app using **Supabase Auth** and **Twelve Data API** for live charts. The **backend** is an **Apache Airflow** pipeline that fetches data, runs predictions, and sends daily emails.
 
 ---
 
-## **Features**
+## Highlights
 
-- **Google Authentication** (via Supabase OAuth)
-- **Landing Page** with modern gradient UI and call-to-action buttons
-- **Stock Selection**: Browse stocks, select favorites, and save preferences to the database
-- **Dashboard**:
-  - Displays selected stocks with **real-time live graphs**
-  - Unique graph for each stock using Twelve Data API
-  - Clean, corporate-grade UI
-- **AuthGuard**:
-  - Blocks access to protected routes if not signed in
-  - Shows popup and redirects to landing page
-- **Responsive UI**:
-  - Works seamlessly on desktop, tablet, and mobile
+- Google login via Supabase OAuth; user is added to DB on first sign‑in (name + email) and never duplicated
+- Protected routes; unauthenticated users see a popup and are redirected
+- Select favorite stocks and store preferences
+- Dashboard with unique, real‑time graphs per stock
+- Airflow DAG schedules daily predictions and email delivery
+- Clean, corporate UI (dark gradient, responsive, TailwindCSS)
 
 ---
 
-## **Tech Stack**
+## Tech Stack
 
-### Frontend
-- [Next.js 13+](https://nextjs.org/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [Chart.js](https://www.chartjs.org/) for stock graphs
+**Frontend**
+- Next.js 13+ (App Router, TypeScript)
+- TailwindCSS
+- react-chartjs-2 + Chart.js
+- Supabase JS client
 
-### Backend
-- [Supabase](https://supabase.com/) for database and authentication
-- [PostgreSQL](https://www.postgresql.org/)
-- [Twelve Data API](https://twelvedata.com/) for live stock market data
-
----
-
-## **Database Schema**
-
-### `users`
-| Column     | Type      | Constraints |
-|------------|-----------|-------------|
-| id         | bigint    | Primary key |
-| name       | varchar   | Required |
-| email      | varchar   | Required, unique |
-| created_at | timestamp | Default now() |
-
-### `stocks`
-| Column      | Type      | Constraints |
-|-------------|-----------|-------------|
-| id          | bigint    | Primary key |
-| stock_name  | varchar   | Required |
-| stock_code  | varchar   | Required, unique |
-| logo_url    | text      | Optional |
-
-### `user_stocks`
-| Column      | Type      | Constraints |
-|-------------|-----------|-------------|
-| id          | bigint    | Primary key |
-| user_id     | bigint    | Foreign key → users.id |
-| stock_id    | bigint    | Foreign key → stocks.id |
-| created_at  | timestamp | Default now() |
-
-### `email_logs` (future backend feature)
-| Column      | Type      | Constraints |
-|-------------|-----------|-------------|
-| id          | bigint    | Primary key |
-| user_id     | bigint    | Foreign key → users.id |
-| stocks      | text      | JSON or comma-separated list |
-| email_status| varchar   | Default 'pending' |
-| error_message | text    | Optional |
-| sent_at     | timestamp | Optional |
+**Backend**
+- Apache Airflow
+- Python 3.x
+- Supabase (PostgreSQL)
+- Twelve Data API
+- SMTP (Nodemailer-like behavior implemented in Python)
 
 ---
 
-## **Project Structure**
+## Database Schema (Supabase)
+
+### users
+- id bigint PK
+- name varchar NOT NULL
+- email varchar UNIQUE NOT NULL
+- created_at timestamp DEFAULT now()
+
+### stocks
+- id bigint PK
+- stock_name varchar NOT NULL
+- stock_code varchar UNIQUE NOT NULL
+- logo_url text
+
+### user_stocks
+- id bigint PK
+- user_id bigint FK → users.id
+- stock_id bigint FK → stocks.id
+- created_at timestamp DEFAULT now()
+
+### email_logs (backend, optional)
+- id bigint PK
+- user_id bigint FK → users.id
+- stocks text
+- email_status varchar DEFAULT 'pending'
+- error_message text
+- sent_at timestamp
+
+---
+
+## Project Structure
 
 ```
-src/
+project-root/
 │
-├── app/
-│   ├── dashboard/
-│   │   └── page.js          # Dashboard page with stock graphs
-│   ├── select-stocks/
-│   │   └── page.js          # Stock selection page
-│   ├── globals.css          # Global styles (Tailwind)
-│   ├── layout.js            # Root layout wrapper with Navbar
-│   └── page.js               # Landing page
+├─ frontend/
+│  ├─ app/
+│  │  ├─ dashboard/
+│  │  │  └─ page.tsx
+│  │  ├─ select-stocks/
+│  │  │  └─ page.tsx
+│  │  ├─ globals.css
+│  │  ├─ layout.tsx
+│  │  └─ page.tsx
+│  │
+│  ├─ components/
+│  │  └─ ui/
+│  │     ├─ Navbar.tsx
+│  │     ├─ StockCard.tsx
+│  │     ├─ StockGraph.tsx
+│  │     └─ StockSelector.tsx
+│  │
+│  ├─ hooks/
+│  │  └─ use-toast.ts
+│  │
+│  ├─ lib/
+│  │  ├─ api.ts
+│  │  ├─ supabase.ts
+│  │  └─ utils.ts
+│  │
+│  ├─ supabase/
+│  │  └─ migrations/
+│  │     └─ 20250905014506_bright_surf.sql
+│  │
+│  ├─ next-env.d.ts
+│  ├─ next.config.js
+│  ├─ postcss.config.js
+│  ├─ tailwind.config.ts
+│  ├─ tsconfig.json
+│  ├─ package.json
+│  ├─ pnpm-lock.yaml
+│  ├─ .eslintrc.json
+│  ├─ .gitignore
+│  └─ .env.local
 │
-├── components/
-│   ├── layout/
-│   │   ├── AuthGuard.jsx     # Protects routes and handles redirects
-│   │   └── Navbar.jsx        # Top navigation bar
-│   │
-│   └── stock/
-│       ├── StockGraph.js     # Real-time graph component
-│       └── StockCard.js      # (Optional) Stock display component
-│
-├── lib/
-│   └── supabaseClient.js     # Supabase client and user check logic
-│
-└── utils/
-    └── fetchStockAPI.js      # Helper to fetch data from Twelve Data API
+└─ backend/
+   ├─ dags/
+   │  └─ stock_prediction_dag.py
+   ├─ data/
+   │  ├─ historical/
+   │  └─ predictions/
+   ├─ utils/
+   │  ├─ db_utils.py
+   │  ├─ fetch_stock.py
+   │  ├─ send_email.py
+   │  └─ train_model.py
+   ├─ requirements.txt
+   ├─ .env
+   ├─ venv/
+   └─ test.py
 ```
 
 ---
 
-## **Getting Started**
+## Frontend Setup
 
-### **1. Clone the Repository**
+1) Go to the frontend folder
 ```bash
-git clone https://github.com/yourusername/stockify.git
-cd stockify
+cd frontend
 ```
 
-### **2. Install Dependencies**
+2) Install dependencies (choose one)
 ```bash
 npm install
+# or
+pnpm install
 ```
 
-### **3. Environment Variables**
-Create a `.env.local` file in the root directory and add:
-
+3) Environment variables (`frontend/.env.local`)
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_TWELVEDATA_API_KEY=your_twelvedata_api_key
 ```
 
-For backend email service (future feature):
-```
-SMTP_HOST=your_smtp_host
-SMTP_PORT=your_smtp_port
-SMTP_USER=your_smtp_user
-SMTP_PASS=your_smtp_password
-EMAIL_FROM=Stockify <no-reply@yourdomain.com>
-BASE_URL=http://localhost:3000
-```
-
-### **4. Run the Development Server**
+4) Run the app
 ```bash
 npm run dev
+# or
+pnpm dev
+```
+Open http://localhost:3000
+
+### Frontend Behavior
+
+- On sign‑in with Google, the app ensures a user row exists in `users` (name + email). If it exists, nothing is added.
+- Protected pages (`/dashboard`, `/select-stocks`) use a client guard; unauthenticated users see a toast/popup and are redirected to `/`.
+- Stock selection writes rows into `user_stocks`.
+- Dashboard queries the user’s selected stocks and renders a unique Chart.js line graph for each using Twelve Data API.
+
+---
+
+## Backend Setup (Airflow)
+
+1) Go to backend
+```bash
+cd backend
 ```
 
-Visit [http://localhost:3000](http://localhost:3000)
+2) Create and activate venv
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3) Install requirements
+```bash
+pip install -r requirements.txt
+```
+
+4) Backend environment (`backend/.env`)
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+TWELVEDATA_API_KEY=your_twelvedata_api_key
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+EMAIL_FROM=Stockify <no-reply@yourdomain.com>
+```
+
+5) Initialize and run Airflow
+```bash
+airflow db init
+airflow webserver -p 8080
+airflow scheduler
+```
+Open http://localhost:8080 and enable the DAG.
+
+### DAG Overview
+
+- `dags/stock_prediction_dag.py` orchestrates:
+  1. Read users + selections from Supabase
+  2. Fetch latest stock data via Twelve Data API
+  3. Run prediction routine in `utils/train_model.py`
+  4. Compose and send HTML email via `utils/send_email.py`
+  5. Optionally log outcomes in `email_logs`
 
 ---
 
-## **Pages Overview**
+## Migrations
 
-| Page             | Description |
-|------------------|-------------|
-| `/`              | Landing page with hero section and sign-in button |
-| `/select-stocks` | Browse stocks and select favorites |
-| `/dashboard`     | View selected stocks with live unique graphs |
+- SQL migration files live in `frontend/supabase/migrations/`
+- Apply via Supabase SQL Editor or Supabase CLI (`supabase db push`)
+- Ensure tables exist before running the app
 
 ---
 
-## **How It Works**
+## Git Layout
 
-1. **User Sign In**  
-   - Google OAuth through Supabase.
-   - User checked in `users` table → if new, added automatically.
+- Separate `.gitignore` files in `frontend/` and `backend/`
+- Initialize git at project root
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/<user>/<repo>.git
+git push -u origin main
+```
 
-2. **Stock Selection**  
-   - All stocks displayed from `stocks` table.
-   - User clicks to toggle selection → stored in `user_stocks`.
-
-3. **Dashboard**  
-   - Fetch user's selected stocks.
-   - For each stock, Twelve Data API provides live data.
-   - Data rendered in unique `Chart.js` graphs.
-
-4. **AuthGuard**  
-   - Blocks access to `/select-stocks` and `/dashboard` if not signed in.
-   - Shows popup message and redirects to `/`.
-
----
-
-## **Future Enhancements**
-
-- Scheduled email delivery with daily predictions.
-- Stock trend prediction models using AI/ML APIs.
-- Portfolio analysis and advanced filtering.
-- Improved analytics dashboard.
+To overwrite a non‑empty remote with local:
+```bash
+git push -f origin main
+```
 
 ---
 
+## Scripts (frontend/package.json)
 
+Common scripts:
+- `dev` — start dev server
+- `build` — production build
+- `start` — run production server
+- `lint` — linting
+
+---
+
+## Notes
+
+- Emails are handled by the backend only; the frontend never sends email.
+- Keep API keys in env files; never commit `.env.local` or `backend/.env`.
+- Each dashboard card renders a unique graph for its stock symbol.
+
+---
