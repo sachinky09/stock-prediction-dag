@@ -1,0 +1,48 @@
+# Virtual environment
+venv/
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyd
+*.pkl
+
+# Logs
+*.log
+logs/
+*.out
+
+# Environment variables
+.env.local
+.env.production
+.env.development
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Data files
+data/historical/*
+data/predictions/*
+
+# Ignore test artifacts
+coverage/
+test-results/
+pytest_cache/
+test.py
+
+# Build/Packaging
+build/
+dist/
+*.egg-info/
+
+# OS files
+.DS_Store
+Thumbs.db

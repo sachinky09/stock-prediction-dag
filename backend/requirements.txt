@@ -1,0 +1,7 @@
+apache-airflow
+psycopg2-binary
+python-dotenv
+pandas
+prophet
+requests
+matplotlib
